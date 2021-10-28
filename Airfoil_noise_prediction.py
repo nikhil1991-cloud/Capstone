@@ -3,22 +3,6 @@ import numpy as np #Data manipulation
 import matplotlib.pyplot as plt # Visualization
 import corner
 
-
-def StandardScaler(Data):
-    for feature in range (0,Data.shape[1]):
-        Current_feature = Data.iloc[:,feature]
-        feature_std = (Current_feature - np.mean(Data.iloc[:,feature]))/(np.std(Data.iloc[:,feature]))
-        Data.iloc[:,feature].update(feature_std)
-    return Data
-
-def MinMaxScaler(Data,amax,amin):
-    for feature in range (1,Data.shape[1]):
-        Current_feature = Data.iloc[:,feature]
-        feature_std = (Current_feature - Data.iloc[:,feature].min())/(Data.iloc[:,feature].max()-Data.iloc[:,feature].min())
-        feature_normalized = (feature_std*(amax-amin))+amin
-        Data.iloc[:,feature].update(feature_normalized)
-    return Data
-
 Data = pd.read_csv('/Users/nikhil/Data/ML_examples/airfoil_self_noise.dat',sep='\t',header=None)
 Data.columns = ['F','theta','L','v','T','P']
 
@@ -40,15 +24,10 @@ for cols in range (0,DATA.shape[1]):
     DATA_Q = DATA_Q[good_data,:]
 
 #Adding simulated noise to the data
-Least_count_instruments = np.array([50,0.5,0,0,0.0001,1])
-NOISY_DATA_Q = np.zeros(np.shape(DATA_Q))
-for cols in range (0,DATA_Q.shape[1]):
-    for rows in range (0,DATA_Q.shape[0]):
-        NOISY_DATA_Q[rows,cols] = DATA_Q[rows,cols] + (np.random.normal(0,1)*Least_count_instruments[cols])
-        
-NOISY_DATA_Q[:,1] = np.clip(NOISY_DATA_Q[:,1],0,None)
-
-
+Least_count_instruments = np.array([2,5,8])
+NOISY_Pressure = np.zeros((np.shape(DATA_Q)[0],3))
+for l in range (0,len(Least_count_instruments)):
+    NOISY_Pressure[:,l] = DATA_Q[:,-1] + (np.random.normal(0,1,len(DATA_Q)))*Least_count_instruments[l]
 
 
 ft=20
@@ -57,11 +36,40 @@ ltw=8
 ltwm=3
 pad_space = 5
 
+fig = plt.figure(figsize=plt.figaspect(0.5))
+
+
+ax = fig.add_subplot(1, 3, 1, projection='3d')
+ax.scatter3D(np.log10(DATA_Q[:,0]),np.log10(DATA_Q[:,1]),DATA_Q[:,-1],s=5,c='k')
+ax.scatter3D(np.log10(DATA_Q[:,0]),np.log10(DATA_Q[:,1]),NOISY_Pressure[:,0],s=5,c='r')
+ax.set_xlabel('log$_{10}$(f (Hz))',fontsize=ft)
+ax.set_ylabel('log$_{10}$$\\theta$(deg)',fontsize=ft)
+ax.set_zlabel('P(dB)',fontsize=ft)
+ax.view_init(azim=20)
+
+ax = fig.add_subplot(1, 3, 2, projection='3d')
+ax.scatter3D(np.log10(DATA_Q[:,0]),np.log10(DATA_Q[:,1]),DATA_Q[:,-1],s=5,c='k')
+ax.scatter3D(np.log10(DATA_Q[:,0]),np.log10(DATA_Q[:,1]),NOISY_Pressure[:,1],s=5,c='r')
+ax.set_xlabel('log$_{10}$(f (Hz))',fontsize=ft)
+ax.set_ylabel('log$_{10}$$\\theta$(deg)',fontsize=ft)
+ax.set_zlabel('P(dB)',fontsize=ft)
+ax.view_init(azim=20)
+
+ax = fig.add_subplot(1, 3, 3, projection='3d')
+ax.scatter3D(np.log10(DATA_Q[:,0]),np.log10(DATA_Q[:,1]),DATA_Q[:,-1],s=5,c='k')
+ax.scatter3D(np.log10(DATA_Q[:,0]),np.log10(DATA_Q[:,1]),NOISY_Pressure[:,2],s=5,c='r')
+ax.set_xlabel('log$_{10}$(f (Hz))',fontsize=ft)
+ax.set_ylabel('log$_{10}$$\\theta$(deg)',fontsize=ft)
+ax.set_zlabel('P(dB)',fontsize=ft)
+ax.view_init(azim=20)
+
+
+
 #Plotting boxplots for original data
 fig=plt.figure()
 plt.subplot(2,3,1)
 plt.boxplot(DATA[:,0])
-plt.ylabel('F (Hertz)',fontsize=ft)
+plt.ylabel('f (Hz)',fontsize=ft)
 plt.minorticks_on()
 plt.xticks([])
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='y',bottom=True,top=True,left=True,right=True)
@@ -73,7 +81,7 @@ for axis in ['top','bottom','left','right']:
 
 plt.subplot(2,3,2)
 plt.boxplot(DATA[:,1])
-plt.ylabel('theta (degrees)',fontsize=ft)
+plt.ylabel('$\\theta$ (deg)',fontsize=ft)
 plt.minorticks_on()
 plt.xticks([])
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='y',bottom=True,top=True,left=True,right=True)
@@ -85,7 +93,7 @@ for axis in ['top','bottom','left','right']:
 
 plt.subplot(2,3,3)
 plt.boxplot(DATA[:,2])
-plt.ylabel('L (meters)',fontsize=ft)
+plt.ylabel('L (m)',fontsize=ft)
 plt.minorticks_on()
 plt.xticks([])
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='y',bottom=True,top=True,left=True,right=True)
@@ -97,7 +105,7 @@ for axis in ['top','bottom','left','right']:
 
 plt.subplot(2,3,4)
 plt.boxplot(DATA[:,3])
-plt.ylabel('v (meters/sec)',fontsize=ft)
+plt.ylabel('v (m/s)',fontsize=ft)
 plt.minorticks_on()
 plt.xticks([])
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='y',bottom=True,top=True,left=True,right=True)
@@ -109,7 +117,7 @@ for axis in ['top','bottom','left','right']:
 
 plt.subplot(2,3,5)
 plt.boxplot(DATA[:,4])
-plt.ylabel('T (meters)',fontsize=ft)
+plt.ylabel('t (m)',fontsize=ft)
 plt.minorticks_on()
 plt.xticks([])
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='y',bottom=True,top=True,left=True,right=True)
@@ -121,7 +129,7 @@ for axis in ['top','bottom','left','right']:
 
 plt.subplot(2,3,6)
 plt.boxplot(DATA[:,5])
-plt.ylabel('P (decibels)',fontsize=ft)
+plt.ylabel('P (dB)',fontsize=ft)
 plt.minorticks_on()
 plt.xticks([])
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='y',bottom=True,top=True,left=True,right=True)
@@ -136,18 +144,18 @@ fig.set_size_inches(20,7)
 
 
 #Making corner plot
-labels = ['F(Hertz)','theta(degrees)','L(meters)','v(meters/sec)','T(meters)','P(decibels)']
-fig_corner = corner.corner(DATA_Q,plot_datapoints=True,labels=labels,label_kwargs=dict(fontsize=12),color='r',s=20,plot_density=False,plot_contours=True)
-fig_corner.set_size_inches(10,7.5)
+labels = ['f(Hz)','$\\theta$(deg)','L(m)','v(m/s)','t(m)','P(dB)']
+fig_corner = corner.corner(DATA_Q,plot_datapoints=True,labels=labels,label_kwargs=dict(fontsize=25),color='r',s=50,plot_density=False,plot_contours=False)
+fig_corner.savefig('/Users/nikhil/Documents4/ML/Capstone_Project/Corner.pdf',dpi=100)
 
 
 
 #Making pair plot with nosiy and original data
 fig1=plt.figure()
 plt.subplot(1,3,1)
-plt.scatter(DATA_Q[:,0],DATA_Q[:,-1],s=10,c='k',label='Original Data')
-plt.scatter(NOISY_DATA_Q[:,0],NOISY_DATA_Q[:,-1],s=20,facecolor='none',edgecolor='r',label='Nosiy Data')
-plt.xlabel('F (Hertz)',fontsize=ft)
+plt.scatter(np.log10(DATA_Q[:,0]),DATA_Q[:,-1],s=10,c='k',label='Original Data')
+plt.scatter(np.log10(DATA_Q[:,0]),NOISY_Pressure[:,0],s=20,facecolor='none',edgecolor='r',label='Nosiy Data')
+plt.xlabel('f (Hz)',fontsize=ft)
 plt.ylabel('P (decibels)',fontsize=ft)
 plt.minorticks_on()
 plt.legend(fontsize=ft-10)
@@ -158,9 +166,9 @@ for axis in ['top','bottom','left','right']:
 
 
 plt.subplot(1,3,2)
-plt.scatter(DATA_Q[:,1],DATA_Q[:,-1],s=10,c='k',label='Original Data')
-plt.scatter(NOISY_DATA_Q[:,1],NOISY_DATA_Q[:,-1],s=20,facecolor='none',edgecolor='r',label='Nosiy Data')
-plt.xlabel('theta (Hertz)',fontsize=ft)
+plt.scatter(np.log10(DATA_Q[:,1]),DATA_Q[:,-1],s=10,c='k',label='Original Data')
+plt.scatter(np.log10(DATA_Q[:,1]),NOISY_Pressure[:,0],s=20,facecolor='none',edgecolor='r',label='Nosiy Data')
+plt.xlabel('$\\theta$ (deg)',fontsize=ft)
 #plt.ylabel('P (decibels)',fontsize=ft)
 plt.minorticks_on()
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='x',bottom=True,top=True,left=True,right=True)
@@ -171,9 +179,9 @@ for axis in ['top','bottom','left','right']:
     plt.gca().spines[axis].set_linewidth(lw)
 
 plt.subplot(1,3,3)
-plt.scatter(DATA_Q[:,4],DATA_Q[:,-1],s=10,c='k',label='Original Data')
-plt.scatter(NOISY_DATA_Q[:,4],NOISY_DATA_Q[:,-1],s=20,facecolor='none',edgecolor='r',label='Nosiy Data')
-plt.xlabel('T (meters)',fontsize=ft)
+plt.scatter(np.log10(DATA_Q[:,4]),DATA_Q[:,-1],s=10,c='k',label='Original Data')
+plt.scatter(np.log10(DATA_Q[:,4]),NOISY_Pressure[:,0],s=20,facecolor='none',edgecolor='r',label='Nosiy Data')
+plt.xlabel('t (m)',fontsize=ft)
 #plt.ylabel('P (decibels)',fontsize=ft)
 plt.minorticks_on()
 plt.tick_params(which='major',length=ltw,width=lw,direction='in',labelsize=ft,pad=pad_space,axis='x',bottom=True,top=True,left=True,right=True)
